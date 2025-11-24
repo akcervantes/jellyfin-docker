@@ -62,7 +62,7 @@ As a disclaimer, I am in no way advocating for piracy and this setup is only mea
 
 1. **Clone this repository**
    ```bash
-   git clone <your-repo-url>
+   git clone jellyfin-docker
    cd media-automation-stack
    ```
 
