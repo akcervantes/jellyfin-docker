@@ -20,8 +20,24 @@ cd media-automation-stack
 
 ## Step 2: Run Auto-Setup (2 minutes)
 
+**Linux/macOS:**
 ```bash
 ./setup-auto.sh
+```
+
+**Windows (easiest - just double-click):**
+```
+setup-auto.bat
+```
+
+**Or in Command Prompt:**
+```cmd
+setup-auto.bat
+```
+
+**Or in PowerShell:**
+```powershell
+.\setup-auto.ps1
 ```
 
 **You'll be asked:**

@@ -73,13 +73,23 @@ Everything is configured automatically for you:
    ```
 
 2. **Run the auto-setup script**
+
+   **Linux/macOS:**
    ```bash
    ./setup-auto.sh
    ```
 
-   On Windows (PowerShell):
+   **Windows:**
+
+   Option A - Batch file (Easiest, recommended):
+   ```cmd
+   setup-auto.bat
+   ```
+   Or just double-click `setup-auto.bat`
+
+   Option B - PowerShell (if batch doesn't work):
    ```powershell
-   bash setup-auto.sh
+   .\setup-auto.ps1
    ```
 
 3. **Follow the prompts**
