@@ -1,0 +1,124 @@
+version: "3.8"
+
+services:
+  # Jellyfin - Media Server
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ./config/jellyfin:/config
+      - ${MEDIA_PATH}/tvshows:/data/tvshows
+      - ${MEDIA_PATH}/movies:/data/movies
+    ports:
+      - "${JELLYFIN_PORT:-8096}:8096"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  # qBittorrent - Torrent Client
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+      - WEBUI_PORT=${QBITTORRENT_PORT:-8888}
+    volumes:
+      - ./config/qbittorrent:/config
+      - ${MEDIA_PATH}/downloads:/downloads
+    ports:
+      - "${QBITTORRENT_PORT:-8888}:${QBITTORRENT_PORT:-8888}"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  # Prowlarr - Indexer Manager
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ./config/prowlarr:/config
+    ports:
+      - "${PROWLARR_PORT:-9696}:9696"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  # Sonarr - TV Show Management
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ./config/sonarr:/config
+      - ${MEDIA_PATH}/tvshows:/tv
+      - ${MEDIA_PATH}/downloads:/downloads
+    ports:
+      - "${SONARR_PORT:-8989}:8989"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  # Radarr - Movie Management
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ./config/radarr:/config
+      - ${MEDIA_PATH}/movies:/movies
+      - ${MEDIA_PATH}/downloads:/downloads
+    ports:
+      - "${RADARR_PORT:-7878}:7878"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  # Jellyseerr - Request Management
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ./config/jellyseerr:/app/config
+    ports:
+      - "${JELLYSEERR_PORT:-5055}:5055"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+  # FlareSolverr - Cloudflare Bypass (Optional)
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ:-UTC}
+    ports:
+      - "${FLARESOLVERR_PORT:-8191}:8191"
+    restart: unless-stopped
+    networks:
+      - media-network
+
+networks:
+  media-network:
+    driver: bridge

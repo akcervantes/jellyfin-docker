@@ -1,0 +1,75 @@
+# Environment and Configuration
+.env
+.env.local
+.env.*.local
+
+# Claude Code
+.claude/
+
+# Service Configuration Directories
+# These contain user-specific settings and should not be committed
+config/
+
+# Media Directories
+# Users will have their own media paths
+media/
+downloads/
+
+# Docker
+docker-compose.override.yml
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+
+# Backup Files
+*.backup
+*.bak
+*.old
+config-backup/
+config-backup.tar.gz
+
+# Node modules (if any scripts use Node)
+node_modules/
+
+# Python (if any helper scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+ENV/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+*.7z
