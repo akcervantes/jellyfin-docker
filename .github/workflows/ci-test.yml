@@ -1,0 +1,151 @@
+name: CI Tests
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+      - 'feat/**'
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            runner_script: tests/test-runner.sh
+            shell: bash
+          - os: macos-latest
+            runner_script: tests/test-runner.sh
+            shell: bash
+          - os: windows-latest
+            runner_script: tests/test-runner.ps1
+            shell: pwsh
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "Docker is pre-installed on Ubuntu runners"
+          docker --version
+          docker compose version
+
+      - name: Set up Docker (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "Docker is pre-installed on macOS runners"
+          docker --version
+          docker compose version
+
+      - name: Set up Docker (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "Docker Desktop is pre-installed on Windows runners"
+          docker --version
+          docker compose version
+
+      - name: Pull Docker images (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          echo "Pulling Docker images to cache them..."
+          docker compose pull || true
+
+      - name: Pull Docker images (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "Pulling Docker images to cache them..."
+          docker compose pull
+        continue-on-error: true
+
+      - name: Make test scripts executable (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x tests/test-runner.sh
+          chmod +x tests/test-installation.sh
+          chmod +x tests/test-helpers.sh
+
+      - name: Run tests (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          bash tests/test-runner.sh --test-mode
+
+      - name: Run tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\tests\test-runner.ps1 -TestMode
+
+      - name: Collect Docker logs on failure (Linux/macOS)
+        if: failure() && runner.os != 'Windows'
+        run: |
+          echo "=== Docker Compose Status ==="
+          docker compose ps || true
+          echo ""
+          echo "=== Container Logs ==="
+          docker compose logs --tail=100 || true
+
+      - name: Collect Docker logs on failure (Windows)
+        if: failure() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "=== Docker Compose Status ==="
+          docker compose ps
+          Write-Host ""
+          Write-Host "=== Container Logs ==="
+          docker compose logs --tail=100
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.os }}
+          path: |
+            .env
+            docker-compose.yml
+          retention-days: 7
+
+      - name: Cleanup (Linux/macOS)
+        if: always() && runner.os != 'Windows'
+        run: |
+          docker compose down -v || true
+          rm -f .env || true
+
+      - name: Cleanup (Windows)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          docker compose down -v
+          if (Test-Path ".env") { Remove-Item ".env" -Force }
+
+  results:
+    name: Test Results
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            echo "✓ All platform tests passed!"
+            exit 0
+          else
+            echo "✗ Some platform tests failed!"
+            exit 1
+          fi
