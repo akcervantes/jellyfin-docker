@@ -6,12 +6,8 @@ on:
       - master
       - main
       - develop
-      - 'feat/**'
   pull_request:
-    branches:
-      - master
-      - main
-      - develop
+    # Run on all pull requests, regardless of target branch
   workflow_dispatch:
 
 jobs:
