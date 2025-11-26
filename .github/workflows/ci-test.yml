@@ -6,8 +6,9 @@ on:
       - master
       - main
       - develop
+      - 'feat/**'
   pull_request:
-    # Run on all pull requests, regardless of target branch
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 jobs:
