@@ -1,0 +1,205 @@
+# Media Automation Stack - Test Configuration
+# This file defines test parameters and expected values
+
+# Test timeouts (in seconds)
+timeouts:
+  container_startup: 90
+  http_service: 120
+  service_stabilization: 10
+  health_check_interval: 2
+
+# Service definitions
+services:
+  jellyseerr:
+    port: 5055
+    container_name: jellyseerr
+    health_endpoint: /
+    expected_status: [200, 301, 302, 404]
+    description: "Content request management interface"
+
+  jellyfin:
+    port: 8096
+    container_name: jellyfin
+    health_endpoint: /
+    expected_status: [200, 302]
+    description: "Media streaming server"
+
+  sonarr:
+    port: 8989
+    container_name: sonarr
+    health_endpoint: /
+    expected_status: [200, 301, 302, 404]
+    description: "TV show automation and management"
+
+  radarr:
+    port: 7878
+    container_name: radarr
+    health_endpoint: /
+    expected_status: [200, 301, 302, 404]
+    description: "Movie automation and management"
+
+  prowlarr:
+    port: 9696
+    container_name: prowlarr
+    health_endpoint: /
+    expected_status: [200, 301, 302, 404]
+    description: "Torrent indexer manager"
+
+  qbittorrent:
+    port: 8888
+    container_name: qbittorrent
+    health_endpoint: /
+    expected_status: [200, 401, 404]
+    description: "Torrent download client"
+
+  flaresolverr:
+    port: 8191
+    container_name: flaresolverr
+    health_endpoint: /
+    expected_status: [200, 404, 405]
+    description: "Cloudflare bypass helper"
+
+# Network configuration
+network:
+  name: media-network
+  driver: bridge
+
+# Volume mounts and directory structure
+directories:
+  required:
+    - path: movies
+      description: "Movies storage"
+    - path: tvshows
+      description: "TV shows storage"
+    - path: downloads
+      description: "Downloads directory"
+    - path: downloads/movies
+      description: "Movie downloads"
+    - path: downloads/tvshows
+      description: "TV show downloads"
+
+# Environment variables
+environment:
+  required:
+    - name: MEDIA_PATH
+      description: "Path to media storage"
+    - name: PUID
+      description: "User ID for file permissions"
+    - name: PGID
+      description: "Group ID for file permissions"
+    - name: TZ
+      description: "Timezone configuration"
+
+  optional:
+    - name: JELLYFIN_PORT
+      description: "Jellyfin web interface port"
+      default: 8096
+    - name: QBITTORRENT_PORT
+      description: "qBittorrent web interface port"
+      default: 8888
+    - name: PROWLARR_PORT
+      description: "Prowlarr web interface port"
+      default: 9696
+    - name: SONARR_PORT
+      description: "Sonarr web interface port"
+      default: 8989
+    - name: RADARR_PORT
+      description: "Radarr web interface port"
+      default: 7878
+    - name: JELLYSEERR_PORT
+      description: "Jellyseerr web interface port"
+      default: 5055
+    - name: FLARESOLVERR_PORT
+      description: "FlareSolverr API port"
+      default: 8191
+
+# Resource requirements
+resources:
+  disk_space:
+    minimum_gb: 5
+    recommended_gb: 100
+    path_check: true
+
+  memory:
+    minimum_mb: 2048
+    recommended_mb: 4096
+
+# Test phases
+test_phases:
+  - name: prerequisites
+    description: "Check Docker, Docker Compose, and system requirements"
+    required: true
+
+  - name: port_availability
+    description: "Verify all required ports are available"
+    required: true
+
+  - name: environment_configuration
+    description: "Validate environment variables and .env file"
+    required: true
+
+  - name: directory_structure
+    description: "Check media directory structure"
+    required: true
+
+  - name: docker_compose_config
+    description: "Validate Docker Compose configuration"
+    required: true
+
+  - name: container_startup
+    description: "Start all containers and verify startup"
+    required: true
+
+  - name: container_health
+    description: "Check container health and restart count"
+    required: true
+
+  - name: network_connectivity
+    description: "Verify Docker network and connectivity"
+    required: true
+
+  - name: service_accessibility
+    description: "Test HTTP accessibility of all services"
+    required: true
+
+  - name: http_endpoints
+    description: "Validate HTTP response codes"
+    required: true
+
+  - name: volume_mounts
+    description: "Verify volume mounts and permissions"
+    required: true
+
+# CI/CD configuration
+ci:
+  platforms:
+    - name: ubuntu-latest
+      runner: ubuntu-latest
+      shell: bash
+
+    - name: macos-latest
+      runner: macos-latest
+      shell: bash
+
+    - name: windows-latest
+      runner: windows-latest
+      shell: powershell
+
+  test_options:
+    test_mode: true
+    cleanup: true
+    timeout_minutes: 30
+
+# Known issues and workarounds
+known_issues:
+  - platform: windows
+    issue: "Path format differences between Windows and Docker"
+    workaround: "Convert Windows paths to Unix-style for Docker volumes"
+
+  - platform: macos
+    issue: "Slower container startup on older Macs"
+    workaround: "Increased timeout values for macOS runners"
+
+  - platform: all
+    issue: "First-time image pulls can be slow"
+    workaround: "Separate image pull step in CI pipeline"

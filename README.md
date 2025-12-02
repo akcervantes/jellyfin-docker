@@ -68,7 +68,7 @@ Everything is configured automatically for you:
 
 1. **Clone this repository**
    ```bash
-   git clone <your-repo-url>
+   git clone jellyfin-docker
    cd media-automation-stack
    ```
 
