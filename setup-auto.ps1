@@ -208,27 +208,31 @@ if ($start -ne 'n' -and $start -ne 'N') {
     Write-Host ""
 
     # Copy template configs if they don't exist
-    if (-not (Test-Path "config\prowlarr\config.xml")) {
-        Write-Host "[INFO] Copying template configurations..." -ForegroundColor Blue
+    Write-Host "[INFO] Copying template configurations..." -ForegroundColor Blue
 
-        New-Item -ItemType Directory -Path "config\prowlarr" -Force | Out-Null
-        New-Item -ItemType Directory -Path "config\sonarr" -Force | Out-Null
-        New-Item -ItemType Directory -Path "config\radarr" -Force | Out-Null
+    New-Item -ItemType Directory -Path "config\prowlarr" -Force | Out-Null
+    New-Item -ItemType Directory -Path "config\sonarr" -Force | Out-Null
+    New-Item -ItemType Directory -Path "config\radarr" -Force | Out-Null
+    New-Item -ItemType Directory -Path "config\qbittorrent\qBittorrent" -Force | Out-Null
 
-        if (Test-Path "templates\prowlarr\config.xml") {
-            Copy-Item "templates\prowlarr\config.xml" "config\prowlarr\config.xml"
-            Write-Host "[✓] Prowlarr config copied" -ForegroundColor Green
-        }
+    if (-not (Test-Path "config\prowlarr\config.xml") -and (Test-Path "templates\prowlarr\config.xml")) {
+        Copy-Item "templates\prowlarr\config.xml" "config\prowlarr\config.xml"
+        Write-Host "[✓] Prowlarr config copied" -ForegroundColor Green
+    }
 
-        if (Test-Path "templates\sonarr\config.xml") {
-            Copy-Item "templates\sonarr\config.xml" "config\sonarr\config.xml"
-            Write-Host "[✓] Sonarr config copied" -ForegroundColor Green
-        }
+    if (-not (Test-Path "config\sonarr\config.xml") -and (Test-Path "templates\sonarr\config.xml")) {
+        Copy-Item "templates\sonarr\config.xml" "config\sonarr\config.xml"
+        Write-Host "[✓] Sonarr config copied" -ForegroundColor Green
+    }
 
-        if (Test-Path "templates\radarr\config.xml") {
-            Copy-Item "templates\radarr\config.xml" "config\radarr\config.xml"
-            Write-Host "[✓] Radarr config copied" -ForegroundColor Green
-        }
+    if (-not (Test-Path "config\radarr\config.xml") -and (Test-Path "templates\radarr\config.xml")) {
+        Copy-Item "templates\radarr\config.xml" "config\radarr\config.xml"
+        Write-Host "[✓] Radarr config copied" -ForegroundColor Green
+    }
+
+    if (-not (Test-Path "config\qbittorrent\qBittorrent\qBittorrent.conf") -and (Test-Path "templates\qbittorrent\qBittorrent\qBittorrent.conf")) {
+        Copy-Item "templates\qbittorrent\qBittorrent\qBittorrent.conf" "config\qbittorrent\qBittorrent\qBittorrent.conf"
+        Write-Host "[✓] qBittorrent config copied (no authentication required for local access)" -ForegroundColor Green
     }
 
     docker compose up -d
@@ -246,20 +250,16 @@ if ($start -ne 'n' -and $start -ne 'N') {
     Write-Host ""
     Write-Host ""
 
-    Write-Host "[INFO] Running automatic configuration..." -ForegroundColor Blue
+    Write-Host "[INFO] Running automatic configuration using Docker..." -ForegroundColor Blue
     Write-Host ""
 
-    # Run the database initialization script
-    $pythonCmd = $null
-    if (Get-Command python -ErrorAction SilentlyContinue) {
-        $pythonCmd = "python"
-    } elseif (Get-Command python3 -ErrorAction SilentlyContinue) {
-        $pythonCmd = "python3"
-    }
+    # Use Docker to run the initialization script (works on all platforms!)
+    if (Test-Path "templates\init-databases.sh") {
+        Write-Host "[INFO] Using Docker-based initialization (no additional software required!)" -ForegroundColor Blue
 
-    if ($pythonCmd -and (Test-Path "templates\init-databases.py")) {
-        Write-Host "[INFO] Using Python initialization script (cross-platform)" -ForegroundColor Blue
-        & $pythonCmd templates\init-databases.py
+        # Run the bash script inside a lightweight Alpine container with sqlite3
+        $currentDir = (Get-Location).Path
+        docker run --rm -v "${currentDir}\config:/config" -v "${currentDir}\templates:/templates" -w / alpine:latest sh -c "apk add --no-cache bash sqlite && bash /templates/init-databases.sh"
 
         Write-Host ""
         Write-Host "[INFO] Restarting services to apply configuration..." -ForegroundColor Blue
@@ -268,14 +268,11 @@ if ($start -ne 'n' -and $start -ne 'N') {
         Write-Host ""
         Write-Host "[✓] Automatic configuration complete!" -ForegroundColor Green
     } else {
-        Write-Host "[WARNING] Auto-configuration not available" -ForegroundColor Yellow
-        Write-Host "[INFO] Python is required for automatic configuration" -ForegroundColor Blue
+        Write-Host "[ERROR] Initialization script not found" -ForegroundColor Red
         Write-Host ""
-        Write-Host "You can either:" -ForegroundColor White
-        Write-Host "  1. Install Python 3 from python.org and re-run this script" -ForegroundColor Gray
-        Write-Host "  2. Configure services manually using docs\CONFIGURATION.md" -ForegroundColor Gray
+        Write-Host "Please ensure templates\init-databases.sh exists" -ForegroundColor White
+        Write-Host "You may need to configure services manually using docs\CONFIGURATION.md" -ForegroundColor White
         Write-Host ""
-        Write-Host "Services are running, but you'll need to configure them manually." -ForegroundColor Yellow
     }
 
     # Auto-start instructions
@@ -329,9 +326,9 @@ if ($start -ne 'n' -and $start -ne 'N') {
     Write-Host "  3. Connect Jellyseerr to Sonarr and Radarr" -ForegroundColor White
     Write-Host "  4. Start requesting movies and TV shows!" -ForegroundColor White
     Write-Host ""
-    Write-Host "Default Credentials:" -ForegroundColor Cyan
-    Write-Host "  qBittorrent: admin / adminadmin (change this!)" -ForegroundColor Yellow
-    Write-Host "  Other services: Set your own password on first login" -ForegroundColor White
+    Write-Host "Authentication:" -ForegroundColor Cyan
+    Write-Host "  All services: No login required for local network access!" -ForegroundColor Green
+    Write-Host "  Note: Authentication is disabled for local addresses only" -ForegroundColor White
     Write-Host ""
     Write-Host "Happy streaming! 🍿" -ForegroundColor Green
     Write-Host ""

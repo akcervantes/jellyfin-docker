@@ -4,8 +4,17 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+# Detect if running inside Docker container
+if [ -d "/config" ] && [ -d "/templates" ]; then
+    # Running in Docker container
+    PROJECT_DIR=""
+    CONFIG_DIR="/config"
+else
+    # Running on host system
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+    CONFIG_DIR="$PROJECT_DIR/config"
+fi
 
 echo "🔧 Initializing service databases with pre-configured settings..."
 
@@ -27,7 +36,7 @@ check_db_ready() {
 # Wait for Prowlarr database
 echo "⏳ Waiting for Prowlarr database..."
 for i in {1..60}; do
-    if check_db_ready "$PROJECT_DIR/config/prowlarr/prowlarr.db"; then
+    if check_db_ready "$CONFIG_DIR/prowlarr/prowlarr.db"; then
         echo "✅ Prowlarr database ready"
         break
     fi
@@ -37,7 +46,7 @@ done
 # Wait for Sonarr database
 echo "⏳ Waiting for Sonarr database..."
 for i in {1..60}; do
-    if check_db_ready "$PROJECT_DIR/config/sonarr/sonarr.db"; then
+    if check_db_ready "$CONFIG_DIR/sonarr/sonarr.db"; then
         echo "✅ Sonarr database ready"
         break
     fi
@@ -47,7 +56,7 @@ done
 # Wait for Radarr database
 echo "⏳ Waiting for Radarr database..."
 for i in {1..60}; do
-    if check_db_ready "$PROJECT_DIR/config/radarr/radarr.db"; then
+    if check_db_ready "$CONFIG_DIR/radarr/radarr.db"; then
         echo "✅ Radarr database ready"
         break
     fi
@@ -58,7 +67,7 @@ echo ""
 echo "📋 Configuring Prowlarr indexers..."
 
 # Add public indexers to Prowlarr
-sqlite3 "$PROJECT_DIR/config/prowlarr/prowlarr.db" <<'EOF'
+sqlite3 "$CONFIG_DIR/prowlarr/prowlarr.db" <<'EOF'
 -- Clear existing indexers
 DELETE FROM Indexers;
 
@@ -129,7 +138,7 @@ echo ""
 echo "📋 Configuring Prowlarr applications..."
 
 # Add Sonarr and Radarr to Prowlarr
-sqlite3 "$PROJECT_DIR/config/prowlarr/prowlarr.db" <<'EOF'
+sqlite3 "$CONFIG_DIR/prowlarr/prowlarr.db" <<'EOF'
 -- Clear existing applications
 DELETE FROM Applications;
 
@@ -162,7 +171,7 @@ echo ""
 echo "📋 Configuring Sonarr download client..."
 
 # Add qBittorrent to Sonarr
-sqlite3 "$PROJECT_DIR/config/sonarr/sonarr.db" <<'EOF'
+sqlite3 "$CONFIG_DIR/sonarr/sonarr.db" <<'EOF'
 -- Clear existing download clients
 DELETE FROM DownloadClients;
 
@@ -184,7 +193,7 @@ echo ""
 echo "📋 Configuring Radarr download client..."
 
 # Add qBittorrent to Radarr
-sqlite3 "$PROJECT_DIR/config/radarr/radarr.db" <<'EOF'
+sqlite3 "$CONFIG_DIR/radarr/radarr.db" <<'EOF'
 -- Clear existing download clients
 DELETE FROM DownloadClients;
 
@@ -206,7 +215,7 @@ echo ""
 echo "📋 Configuring Sonarr root folder..."
 
 # Add root folder to Sonarr
-sqlite3 "$PROJECT_DIR/config/sonarr/sonarr.db" <<'EOF'
+sqlite3 "$CONFIG_DIR/sonarr/sonarr.db" <<'EOF'
 -- Clear existing root folders
 DELETE FROM RootFolders;
 
@@ -221,7 +230,7 @@ echo ""
 echo "📋 Configuring Radarr root folder..."
 
 # Add root folder to Radarr
-sqlite3 "$PROJECT_DIR/config/radarr/radarr.db" <<'EOF'
+sqlite3 "$CONFIG_DIR/radarr/radarr.db" <<'EOF'
 -- Clear existing root folders
 DELETE FROM RootFolders;
 

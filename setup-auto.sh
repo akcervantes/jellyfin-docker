@@ -252,24 +252,27 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]; then
     echo ""
 
     # Copy template configs if they don't exist
-    if [ ! -f "config/prowlarr/config.xml" ]; then
-        print_info "Copying template configurations..."
-        mkdir -p config/prowlarr config/sonarr config/radarr
+    print_info "Copying template configurations..."
+    mkdir -p config/prowlarr config/sonarr config/radarr config/qbittorrent/qBittorrent
 
-        if [ -f "templates/prowlarr/config.xml" ]; then
-            cp templates/prowlarr/config.xml config/prowlarr/config.xml
-            print_success "Prowlarr config copied"
-        fi
+    if [ ! -f "config/prowlarr/config.xml" ] && [ -f "templates/prowlarr/config.xml" ]; then
+        cp templates/prowlarr/config.xml config/prowlarr/config.xml
+        print_success "Prowlarr config copied"
+    fi
 
-        if [ -f "templates/sonarr/config.xml" ]; then
-            cp templates/sonarr/config.xml config/sonarr/config.xml
-            print_success "Sonarr config copied"
-        fi
+    if [ ! -f "config/sonarr/config.xml" ] && [ -f "templates/sonarr/config.xml" ]; then
+        cp templates/sonarr/config.xml config/sonarr/config.xml
+        print_success "Sonarr config copied"
+    fi
 
-        if [ -f "templates/radarr/config.xml" ]; then
-            cp templates/radarr/config.xml config/radarr/config.xml
-            print_success "Radarr config copied"
-        fi
+    if [ ! -f "config/radarr/config.xml" ] && [ -f "templates/radarr/config.xml" ]; then
+        cp templates/radarr/config.xml config/radarr/config.xml
+        print_success "Radarr config copied"
+    fi
+
+    if [ ! -f "config/qbittorrent/qBittorrent/qBittorrent.conf" ] && [ -f "templates/qbittorrent/qBittorrent/qBittorrent.conf" ]; then
+        cp templates/qbittorrent/qBittorrent/qBittorrent.conf config/qbittorrent/qBittorrent/qBittorrent.conf
+        print_success "qBittorrent config copied (no authentication required for local access)"
     fi
 
     docker compose up -d
@@ -286,33 +289,20 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]; then
     done
     echo ""
 
-    print_info "Running automatic configuration..."
+    print_info "Running automatic configuration using Docker..."
     echo ""
 
-    # Run the database initialization script (try Python first, fallback to bash)
-    if command -v python3 &> /dev/null && [ -f "templates/init-databases.py" ]; then
-        print_info "Using Python initialization script (cross-platform)"
-        python3 templates/init-databases.py
+    # Use Docker to run the initialization script (works on all platforms!)
+    if [ -f "templates/init-databases.sh" ]; then
+        print_info "Using Docker-based initialization (no additional software required!)"
 
-        echo ""
-        print_info "Restarting services to apply configuration..."
-        docker compose restart
-
-        echo ""
-        print_success "Automatic configuration complete!"
-    elif command -v python &> /dev/null && [ -f "templates/init-databases.py" ]; then
-        print_info "Using Python initialization script (cross-platform)"
-        python templates/init-databases.py
-
-        echo ""
-        print_info "Restarting services to apply configuration..."
-        docker compose restart
-
-        echo ""
-        print_success "Automatic configuration complete!"
-    elif command -v sqlite3 &> /dev/null && [ -f "templates/init-databases.sh" ]; then
-        print_info "Using bash initialization script (Linux)"
-        bash templates/init-databases.sh
+        # Run the bash script inside a lightweight Alpine container with sqlite3
+        docker run --rm \
+            -v "$(pwd)/config:/config" \
+            -v "$(pwd)/templates:/templates" \
+            -w / \
+            alpine:latest \
+            sh -c "apk add --no-cache bash sqlite && bash /templates/init-databases.sh"
 
         echo ""
         print_info "Restarting services to apply configuration..."
@@ -321,14 +311,11 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]; then
         echo ""
         print_success "Automatic configuration complete!"
     else
-        print_warning "Auto-configuration not available on this system"
-        print_info "Python or sqlite3 is required for automatic configuration"
+        print_error "Initialization script not found"
         echo ""
-        echo "You can either:"
-        echo "  1. Install Python 3 and re-run this script"
-        echo "  2. Configure services manually using docs/CONFIGURATION.md"
+        echo "Please ensure templates/init-databases.sh exists"
+        echo "You may need to configure services manually using docs/CONFIGURATION.md"
         echo ""
-        echo "Services are running, but you'll need to configure them manually."
     fi
 
     # Auto-start on boot configuration (platform-specific)

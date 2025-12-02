@@ -216,26 +216,38 @@ if /i not "!start!"=="n" (
     echo.
 
     REM Copy template configs if they don't exist
+    echo [INFO] Copying template configurations...
+
+    if not exist "config\prowlarr" mkdir "config\prowlarr"
+    if not exist "config\sonarr" mkdir "config\sonarr"
+    if not exist "config\radarr" mkdir "config\radarr"
+    if not exist "config\qbittorrent\qBittorrent" mkdir "config\qbittorrent\qBittorrent"
+
     if not exist "config\prowlarr\config.xml" (
-        echo [INFO] Copying template configurations...
-
-        if not exist "config\prowlarr" mkdir "config\prowlarr"
-        if not exist "config\sonarr" mkdir "config\sonarr"
-        if not exist "config\radarr" mkdir "config\radarr"
-
         if exist "templates\prowlarr\config.xml" (
             copy "templates\prowlarr\config.xml" "config\prowlarr\config.xml" >nul
             echo [OK] Prowlarr config copied
         )
+    )
 
+    if not exist "config\sonarr\config.xml" (
         if exist "templates\sonarr\config.xml" (
             copy "templates\sonarr\config.xml" "config\sonarr\config.xml" >nul
             echo [OK] Sonarr config copied
         )
+    )
 
+    if not exist "config\radarr\config.xml" (
         if exist "templates\radarr\config.xml" (
             copy "templates\radarr\config.xml" "config\radarr\config.xml" >nul
             echo [OK] Radarr config copied
+        )
+    )
+
+    if not exist "config\qbittorrent\qBittorrent\qBittorrent.conf" (
+        if exist "templates\qbittorrent\qBittorrent\qBittorrent.conf" (
+            copy "templates\qbittorrent\qBittorrent\qBittorrent.conf" "config\qbittorrent\qBittorrent\qBittorrent.conf" >nul
+            echo [OK] qBittorrent config copied ^(no authentication required for local access^)
         )
     )
 
@@ -254,47 +266,28 @@ if /i not "!start!"=="n" (
     echo.
     echo.
 
-    echo [INFO] Running automatic configuration...
+    echo [INFO] Running automatic configuration using Docker...
     echo.
 
-    REM Run the database initialization script
-    where python >nul 2>&1
-    if %errorLevel% equ 0 (
-        if exist "templates\init-databases.py" (
-            echo [INFO] Using Python initialization script ^(cross-platform^)
-            python templates\init-databases.py
+    REM Use Docker to run the initialization script (works on all platforms!)
+    if exist "templates\init-databases.sh" (
+        echo [INFO] Using Docker-based initialization ^(no additional software required!^)
 
-            echo.
-            echo [INFO] Restarting services to apply configuration...
-            docker compose restart
+        REM Run the bash script inside a lightweight Alpine container with sqlite3
+        docker run --rm -v "%cd%\config:/config" -v "%cd%\templates:/templates" -w / alpine:latest sh -c "apk add --no-cache bash sqlite && bash /templates/init-databases.sh"
 
-            echo.
-            echo [OK] Automatic configuration complete!
-        )
+        echo.
+        echo [INFO] Restarting services to apply configuration...
+        docker compose restart
+
+        echo.
+        echo [OK] Automatic configuration complete!
     ) else (
-        where python3 >nul 2>&1
-        if !errorLevel! equ 0 (
-            if exist "templates\init-databases.py" (
-                echo [INFO] Using Python initialization script ^(cross-platform^)
-                python3 templates\init-databases.py
-
-                echo.
-                echo [INFO] Restarting services to apply configuration...
-                docker compose restart
-
-                echo.
-                echo [OK] Automatic configuration complete!
-            )
-        ) else (
-            echo [WARNING] Auto-configuration not available
-            echo [INFO] Python is required for automatic configuration
-            echo.
-            echo You can either:
-            echo   1. Install Python 3 from python.org and re-run this script
-            echo   2. Configure services manually using docs\CONFIGURATION.md
-            echo.
-            echo Services are running, but you'll need to configure them manually.
-        )
+        echo [ERROR] Initialization script not found
+        echo.
+        echo Please ensure templates\init-databases.sh exists
+        echo You may need to configure services manually using docs\CONFIGURATION.md
+        echo.
     )
 
     REM Auto-start instructions
@@ -348,9 +341,9 @@ if /i not "!start!"=="n" (
     echo   3. Connect Jellyseerr to Sonarr and Radarr
     echo   4. Start requesting movies and TV shows!
     echo.
-    echo Default Credentials:
-    echo   qBittorrent: admin / adminadmin ^(change this!^)
-    echo   Other services: Set your own password on first login
+    echo Authentication:
+    echo   All services: No login required for local network access!
+    echo   Note: Authentication is disabled for local addresses only
     echo.
     echo Happy streaming!
     echo.

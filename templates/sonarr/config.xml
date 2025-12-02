@@ -5,8 +5,8 @@
   <EnableSsl>False</EnableSsl>
   <LaunchBrowser>True</LaunchBrowser>
   <ApiKey>f7425b1d04114fa887a6867d867f8bf5</ApiKey>
-  <AuthenticationMethod>Forms</AuthenticationMethod>
-  <AuthenticationRequired>Enabled</AuthenticationRequired>
+  <AuthenticationMethod>None</AuthenticationMethod>
+  <AuthenticationRequired>DisabledForLocalAddresses</AuthenticationRequired>
   <Branch>main</Branch>
   <LogLevel>info</LogLevel>
   <SslCertPath></SslCertPath>
