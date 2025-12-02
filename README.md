@@ -28,13 +28,15 @@ As a disclaimer, I am in no way advocating for piracy and this setup is only mea
 
 ## Features
 
-✨ **One-Command Setup** - Run `./setup.sh` and you're done
+✨ **One-Command Setup** - Run `./setup-auto.sh` and you're done in 5 minutes!
+🚀 **Auto-Configuration** - Services pre-configured and connected automatically
 🔒 **Secure** - Everything runs on your local network only
 🌍 **Cross-Platform** - Works on Windows, macOS, and Linux
 📦 **Complete Solution** - All services integrated and ready to go
 🎯 **User-Friendly** - Beautiful web interfaces for everything
 🔄 **Automatic** - New episodes download automatically
 📱 **Mobile Ready** - Access from your phone on the same network
+⚡ **6 Indexers Pre-configured** - Start searching for content immediately
 
 ## What's Included
 
@@ -58,7 +60,11 @@ As a disclaimer, I am in no way advocating for piracy and this setup is only mea
 - **At least 4GB RAM** for all services
 - **External drive or folder** for media storage (recommended 100GB+)
 
-### Installation (3 Steps)
+### Installation (2 Options)
+
+#### Option A: Auto-Setup (Recommended - 5 Minutes!)
+
+Everything is configured automatically for you:
 
 1. **Clone this repository**
    ```bash
@@ -66,22 +72,49 @@ As a disclaimer, I am in no way advocating for piracy and this setup is only mea
    cd media-automation-stack
    ```
 
-2. **Run the setup script**
+2. **Run the auto-setup script**
+
+   **Linux/macOS:**
    ```bash
-   ./setup.sh
+   ./setup-auto.sh
    ```
 
-   On Windows (PowerShell):
+   **Windows:**
+
+   Option A - Batch file (Easiest, recommended):
+   ```cmd
+   setup-auto.bat
+   ```
+   Or just double-click `setup-auto.bat`
+
+   Option B - PowerShell (if batch doesn't work):
    ```powershell
-   bash setup.sh
+   .\setup-auto.ps1
    ```
 
 3. **Follow the prompts**
    - Enter your media storage path
    - Select your timezone
-   - Services will start automatically
+   - Wait for auto-configuration (30 seconds)
 
-That's it! 🎉
+**What's pre-configured automatically:**
+- ✅ 6 public torrent indexers (1337x, TPB, YTS, EZTV, TorrentGalaxy, Torlock)
+- ✅ Prowlarr connected to Sonarr and Radarr
+- ✅ Sonarr and Radarr connected to qBittorrent
+- ✅ Root folders and download categories
+- ✅ All API keys and service connections
+
+**That's it!** Open Jellyseerr and start requesting content immediately.
+
+#### Option B: Manual Setup (Full Control)
+
+Use the standard setup if you prefer to configure everything yourself:
+
+```bash
+./setup.sh
+```
+
+Then follow the [Configuration Guide](docs/CONFIGURATION.md) to configure each service manually.
 
 ### First Time Access
 
@@ -89,7 +122,12 @@ Once setup is complete, open your browser and visit:
 
 **http://localhost:5055** (Jellyseerr - Start here!)
 
-Then configure the services by following the [Configuration Guide](docs/CONFIGURATION.md).
+For auto-setup users, you only need to:
+1. Connect Jellyseerr to Jellyfin
+2. Connect Jellyseerr to Sonarr and Radarr
+3. Start requesting!
+
+For manual setup users, follow the complete [Configuration Guide](docs/CONFIGURATION.md).
 
 ## Usage
 
@@ -183,14 +221,26 @@ After setup, your media folder will look like this:
 - No default passwords (you set them on first access)
 - Your data stays on your computer
 
+### About Pre-Configured API Keys (Auto-Setup)
+
+The auto-setup script uses **pre-configured API keys** for service-to-service communication. This is safe for local deployments because:
+
+✅ **Local-Only Access**: Services are only accessible on your local network (127.0.0.1 or LAN)
+✅ **Not User Passwords**: API keys are only for internal service communication, not user authentication
+✅ **You Still Set Passwords**: You create your own secure passwords for web interface login
+✅ **Standard Practice**: Many Docker stacks use this approach for simplified setup
+
+**Important**: These API keys are for **convenience in local deployments only**. If you plan to expose services externally (not recommended), you should regenerate all API keys.
+
 ### Important Security Notes
 
 1. **DO NOT** expose these services directly to the internet
-2. **DO** use strong passwords for all services
+2. **DO** use strong passwords for all web interfaces
 3. **DO** keep your system and Docker updated
-4. **Consider** using a VPN with qBittorrent for additional privacy
+4. **DO** change qBittorrent default password (admin/adminadmin)
+5. **CONSIDER** using a VPN with qBittorrent for additional privacy
 
-See [Security Best Practices](docs/SECURITY.md) for more information.
+For advanced users who want to regenerate API keys, see [Security Best Practices](docs/SECURITY.md).
 
 ## Mobile Access
 

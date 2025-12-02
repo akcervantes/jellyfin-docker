@@ -10,6 +10,9 @@
 # These contain user-specific settings and should not be committed
 config/
 
+# Exception: Include template configurations for auto-setup
+!templates/
+
 # Media Directories
 # Users will have their own media paths
 media/
